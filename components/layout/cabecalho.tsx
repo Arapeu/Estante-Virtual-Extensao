@@ -39,7 +39,7 @@ export default function Cabecalho() {
               <Link href="/login">Login</Link>
             </Button>
             <Button asChild>
-              <Link href="/editor">Área do Editor</Link>
+              <Link href="/editor/login">Área do Editor</Link>
             </Button>
           </div>
 
@@ -70,7 +70,7 @@ export default function Cabecalho() {
                   <Link href="/login">Login</Link>
                 </Button>
                 <Button asChild>
-                  <Link href="/editor">Área do Editor</Link>
+                  <Link href="/editor/login">Área do Editor</Link>
                 </Button>
               </div>
             </nav>

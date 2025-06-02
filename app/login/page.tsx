@@ -101,6 +101,14 @@ export default function PaginaLogin() {
 
                     <TabsContent value="aluno" className="space-y-4 mt-6">
                       <div className="space-y-4">
+                        <div className="text-center">
+                          <p className="text-sm text-gray-600 mb-4">
+                            Ainda não possui registro?{" "}
+                            <Link href="/cadastro/aluno" className="text-blue-600 hover:underline font-medium">
+                              Faça seu cadastro agora
+                            </Link>
+                          </p>
+                        </div>
                         <div>
                           <Label htmlFor="email-aluno">Email do Aluno</Label>
                           <Input id="email-aluno" type="email" placeholder="seu.email@instituicao.edu" />
@@ -111,7 +119,7 @@ export default function PaginaLogin() {
                         </div>
                         <Button className="w-full">Entrar como Aluno</Button>
                         <div className="text-center">
-                          <Link href="/esqueci-senha" className="text-sm text-blue-600 hover:underline">
+                          <Link href="/esqueci-senha" className="block text-sm text-blue-600 hover:underline">
                             Esqueci minha senha
                           </Link>
                         </div>
@@ -120,6 +128,14 @@ export default function PaginaLogin() {
 
                     <TabsContent value="professor" className="space-y-4 mt-6">
                       <div className="space-y-4">
+                        <div className="text-center">
+                          <p className="text-sm text-gray-600 mb-4">
+                            Ainda não possui registro?{" "}
+                            <Link href="/cadastro/professor" className="text-blue-600 hover:underline font-medium">
+                              Faça seu cadastro agora
+                            </Link>
+                          </p>
+                        </div>
                         <div>
                           <Label htmlFor="email-professor">Email Institucional</Label>
                           <Input id="email-professor" type="email" placeholder="professor@instituicao.edu" />
@@ -133,7 +149,7 @@ export default function PaginaLogin() {
                           <Link href="/esqueci-senha" className="block text-sm text-blue-600 hover:underline">
                             Esqueci minha senha
                           </Link>
-                          <Link href="/solicitar-acesso" className="block text-sm text-green-600 hover:underline">
+                          <Link href="/solicitar-acesso" className="block text-sm text-blue-600 hover:underline">
                             Solicitar acesso como professor
                           </Link>
                         </div>
