@@ -10,9 +10,48 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { User, GraduationCap, Users, Play } from "lucide-react"
 import Cabecalho from "@/components/layout/cabecalho"
 import Rodape from "@/components/layout/rodape"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function PaginaLogin() {
-  const [tipoUsuario, setTipoUsuario] = useState<"visitante" | "aluno" | "professor">("visitante")
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [activeRole, setActiveRole] = useState(searchParams.get("role") || "VISITOR")
+  
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  })
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          role: activeRole
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Salvar dados do usuário no localStorage
+        localStorage.setItem("user", JSON.stringify(data.user))
+        // Redirecionar para o catálogo
+        router.push("/catalogo")
+      } else {
+        const data = await response.json()
+        alert(data.error || "Erro ao fazer login")
+      }
+    } catch (error) {
+      console.error("Erro ao fazer login:", error)
+      alert("Erro ao fazer login")
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -70,23 +109,23 @@ export default function PaginaLogin() {
                   <CardDescription>Entre com suas credenciais para acessar conteúdo exclusivo</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Tabs value={tipoUsuario} onValueChange={(valor) => setTipoUsuario(valor as any)}>
+                  <Tabs value={activeRole} onValueChange={setActiveRole}>
                     <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="visitante" className="text-xs">
+                      <TabsTrigger value="VISITOR" className="text-xs">
                         <User className="h-4 w-4 mr-1" />
                         Visitante
                       </TabsTrigger>
-                      <TabsTrigger value="aluno" className="text-xs">
+                      <TabsTrigger value="STUDENT" className="text-xs">
                         <GraduationCap className="h-4 w-4 mr-1" />
                         Aluno
                       </TabsTrigger>
-                      <TabsTrigger value="professor" className="text-xs">
+                      <TabsTrigger value="TEACHER" className="text-xs">
                         <Users className="h-4 w-4 mr-1" />
                         Professor
                       </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="visitante" className="space-y-4 mt-6">
+                    <TabsContent value="VISITOR" className="space-y-4 mt-6">
                       <div className="text-center py-8">
                         <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <h3 className="font-semibold mb-2">Acesso Livre</h3>
@@ -99,45 +138,80 @@ export default function PaginaLogin() {
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="aluno" className="space-y-4 mt-6">
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="email-aluno">Email do Aluno</Label>
-                          <Input id="email-aluno" type="email" placeholder="seu.email@instituicao.edu" />
+                    <TabsContent value="STUDENT" className="space-y-4 mt-6">
+                      <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="text-center">
+                          <Link href="/register?role=STUDENT" className="text-blue-600 hover:underline">
+                            Não possui uma conta? Registre-se como aluno
+                          </Link>
                         </div>
                         <div>
-                          <Label htmlFor="senha-aluno">Senha</Label>
-                          <Input id="senha-aluno" type="password" />
+                          <Label htmlFor="student-email">Email</Label>
+                          <Input
+                            id="student-email"
+                            type="email"
+                            required
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          />
                         </div>
-                        <Button className="w-full">Entrar como Aluno</Button>
+                        <div>
+                          <Label htmlFor="student-password">Senha</Label>
+                          <Input
+                            id="student-password"
+                            type="password"
+                            required
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                          />
+                        </div>
+                        <Button type="submit" className="w-full">
+                          Entrar como Aluno
+                        </Button>
                         <div className="text-center">
                           <Link href="/esqueci-senha" className="text-sm text-blue-600 hover:underline">
                             Esqueci minha senha
                           </Link>
                         </div>
-                      </div>
+                      </form>
                     </TabsContent>
 
-                    <TabsContent value="professor" className="space-y-4 mt-6">
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="email-professor">Email Institucional</Label>
-                          <Input id="email-professor" type="email" placeholder="professor@instituicao.edu" />
+                    <TabsContent value="TEACHER" className="space-y-4 mt-6">
+                      <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="text-center">
+                          <Link href="/register?role=TEACHER" className="text-blue-600 hover:underline">
+                            Não possui uma conta? Registre-se como professor
+                          </Link>
                         </div>
                         <div>
-                          <Label htmlFor="senha-professor">Senha</Label>
-                          <Input id="senha-professor" type="password" />
+                          <Label htmlFor="teacher-email">Email</Label>
+                          <Input
+                            id="teacher-email"
+                            type="email"
+                            required
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          />
                         </div>
-                        <Button className="w-full">Entrar como Professor</Button>
-                        <div className="text-center space-y-2">
-                          <Link href="/esqueci-senha" className="block text-sm text-blue-600 hover:underline">
+                        <div>
+                          <Label htmlFor="teacher-password">Senha</Label>
+                          <Input
+                            id="teacher-password"
+                            type="password"
+                            required
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                          />
+                        </div>
+                        <Button type="submit" className="w-full">
+                          Entrar como Professor
+                        </Button>
+                        <div className="text-center">
+                          <Link href="/esqueci-senha" className="text-sm text-blue-600 hover:underline">
                             Esqueci minha senha
                           </Link>
-                          <Link href="/solicitar-acesso" className="block text-sm text-green-600 hover:underline">
-                            Solicitar acesso como professor
-                          </Link>
                         </div>
-                      </div>
+                      </form>
                     </TabsContent>
                   </Tabs>
                 </CardContent>

@@ -9,6 +9,10 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  webpack: (config) => {
+    config.externals = [...config.externals, { typeorm: "commonjs typeorm" }];
+    return config;
+  },
 }
 
 export default nextConfig
