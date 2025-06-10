@@ -1,11 +1,45 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { BookOpen, Users, Download, Heart } from "lucide-react"
+'use client'
+
 import Cabecalho from "@/components/layout/cabecalho"
 import Rodape from "@/components/layout/rodape"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { BookOpen, Download, Heart, Users } from "lucide-react"
+import Image from 'next/image'
+import Link from "next/link"
+import { useEffect, useState } from 'react'
+
+interface Book {
+  id: string
+  title: string
+  author: string
+  pdfPath: string
+  coverImagePath: string | null
+}
 
 export default function PaginaInicial() {
+  const [books, setBooks] = useState<Book[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        const response = await fetch('/api/books')
+        if (!response.ok) {
+          throw new Error('Erro ao buscar os livros')
+        }
+        const data = await response.json()
+        setBooks(data.books)
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchBooks()
+  }, [])
+
   return (
     <div className="min-h-screen flex flex-col">
       <Cabecalho />
@@ -24,12 +58,59 @@ export default function PaginaInicial() {
             <Button
               size="lg"
               variant="outline"
-              className="text-white border-white hover:bg-white hover:text-blue-600"
+              className="text-blue-600 border-white hover:bg-blue-600 hover:text-purple-300"
               asChild
             >
               <Link href="/login">Fazer Login</Link>
             </Button>
           </div>
+        </div>
+      </section>
+
+      {/* Livros Recentes */}
+      <section className="bg-gray-50 py-16">
+        <div className="container mx-auto px-4">
+          <h2 className="mb-12 text-center text-3xl font-bold">
+            Livros Recentes
+          </h2>
+          {isLoading ? (
+            <p className="text-center">Carregando livros...</p>
+          ) : (
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {books.slice(0, 6).map((book) => (
+                <Card
+                  key={book.id}
+                  className="flex flex-col justify-between transition-shadow hover:shadow-lg"
+                >
+                  <CardHeader className="p-4">
+                    <div className="relative mb-4 flex aspect-[3/4] items-center justify-center rounded-lg bg-gray-200">
+                      {book.coverImagePath ? (
+                        <Image
+                          src={book.coverImagePath}
+                          alt={`Capa do livro ${book.title}`}
+                          layout="fill"
+                          objectFit="cover"
+                          className="rounded-lg"
+                        />
+                      ) : (
+                        <BookOpen className="h-12 w-12 text-gray-400" />
+                      )}
+                    </div>
+                    <CardTitle>{book.title}</CardTitle>
+                    <CardDescription>{book.author}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <Button variant="outline" size="sm" asChild className="w-full">
+                      <a href={book.pdfPath} download>
+                        <Download className="mr-2 h-4 w-4" />
+                        Baixar PDF
+                      </a>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

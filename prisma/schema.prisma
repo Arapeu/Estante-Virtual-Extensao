@@ -28,6 +28,19 @@ model User {
   @@map("users")
 }
 
+model Book {
+  id             String   @id @default(uuid())
+  title          String
+  author         String
+  pdfPath        String   @map("pdf_path")
+  coverImagePath String?  @map("cover_image_path")
+  theme          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("books")
+}
+
 enum Role {
   VISITOR
   STUDENT

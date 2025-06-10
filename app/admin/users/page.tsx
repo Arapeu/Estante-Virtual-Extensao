@@ -1,173 +1,187 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, UserPlus, UserMinus, Edit2 } from "lucide-react"
+import Cabecalho from '@/components/layout/cabecalho'
+import Rodape from '@/components/layout/rodape'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { useToast } from '@/components/ui/use-toast'
+import { ArrowLeft, Trash2 } from 'lucide-react'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 interface User {
   id: string
   name: string
   email: string
-  role: "STUDENT" | "TEACHER"
-  institution: string
-  createdAt: string
+  role: string
+  institution: string | null
 }
 
-export default function UsersManagement() {
-  const router = useRouter()
-  const [admin, setAdmin] = useState<any>(null)
-  const [students, setStudents] = useState<User[]>([])
-  const [teachers, setTeachers] = useState<User[]>([])
-  const [activeTab, setActiveTab] = useState("students")
-
-  useEffect(() => {
-    // Verificar se o admin está logado
-    const adminData = localStorage.getItem("admin")
-    if (!adminData) {
-      router.push("/admin/login")
-      return
-    }
-    setAdmin(JSON.parse(adminData))
-
-    // Carregar usuários
-    fetchUsers()
-  }, [router])
+export default function ManageUsersPage() {
+  const [users, setUsers] = useState<User[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const { toast } = useToast()
 
   const fetchUsers = async () => {
+    setIsLoading(true)
     try {
-      const response = await fetch("/api/admin/users")
+      const response = await fetch('/api/users')
+      if (!response.ok) {
+        throw new Error('Erro ao buscar os usuários')
+      }
       const data = await response.json()
-      
-      // Separar usuários por tipo
-      const studentsList = data.filter((user: User) => user.role === "STUDENT")
-      const teachersList = data.filter((user: User) => user.role === "TEACHER")
-      
-      setStudents(studentsList)
-      setTeachers(teachersList)
+      setUsers(data.users || [])
     } catch (error) {
-      console.error("Erro ao carregar usuários:", error)
+      console.error(error)
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao carregar os usuários.',
+        description: 'Tente novamente mais tarde.',
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleBack = () => {
-    router.push("/admin/dashboard")
-  }
+  useEffect(() => {
+    fetchUsers()
+  }, [])
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR")
+  const handleDelete = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao deletar o usuário')
+      }
+
+      toast({
+        title: 'Sucesso!',
+        description: 'O usuário foi deletado.',
+      })
+      fetchUsers() // Atualiza a lista
+    } catch (error) {
+      console.error(error)
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao deletar o usuário.',
+        description: 'Tente novamente mais tarde.',
+      })
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" onClick={handleBack} className="text-gray-600">
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                Voltar
-              </Button>
-              <h1 className="text-2xl font-bold text-gray-900">Gerenciar Usuários</h1>
+    <div className="flex min-h-screen flex-col">
+      <Cabecalho />
+      <main className="flex-1 bg-gray-50/50 py-8">
+        <div className="container mx-auto px-4">
+          <div className="mb-8 flex items-center gap-4">
+            <Button variant="outline" size="icon" asChild>
+              <Link href="/admin/dashboard">
+                <ArrowLeft className="h-4 w-4" />
+                <span className="sr-only">Voltar</span>
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold">Gerenciar Usuários</h1>
+              <p className="text-gray-600">
+                Visualize e delete os usuários cadastrados.
+              </p>
             </div>
           </div>
+
+          <div className="rounded-lg border bg-white shadow-sm">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Instituição</TableHead>
+                  <TableHead>Função</TableHead>
+                  <TableHead className="w-[100px] text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">
+                      Carregando...
+                    </TableCell>
+                  </TableRow>
+                ) : users.length > 0 ? (
+                  users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.institution || 'N/A'}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{user.role}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="icon">
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Deletar</span>
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Você tem certeza?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Essa ação não pode ser desfeita. Isso irá
+                                deletar permanentemente o usuário.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(user.id)}
+                              >
+                                Deletar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">
+                      Nenhum usuário encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="students" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="students" onClick={() => setActiveTab("students")}>
-              Alunos ({students.length})
-            </TabsTrigger>
-            <TabsTrigger value="teachers" onClick={() => setActiveTab("teachers")}>
-              Professores ({teachers.length})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="students">
-            <Card>
-              <CardHeader>
-                <CardTitle>Lista de Alunos</CardTitle>
-                <CardDescription>
-                  Visualize e gerencie os alunos cadastrados no sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {students.map((student) => (
-                    <div
-                      key={student.id}
-                      className="flex items-center justify-between p-4 bg-white rounded-lg border"
-                    >
-                      <div>
-                        <h3 className="font-medium">{student.name}</h3>
-                        <p className="text-sm text-gray-500">{student.email}</p>
-                        <p className="text-sm text-gray-500">{student.institution}</p>
-                        <p className="text-xs text-gray-400">
-                          Cadastrado em: {formatDate(student.createdAt)}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Edit2 className="h-4 w-4 mr-2" />
-                          Editar
-                        </Button>
-                        <Button variant="outline" size="sm" className="text-red-600">
-                          <UserMinus className="h-4 w-4 mr-2" />
-                          Remover
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="teachers">
-            <Card>
-              <CardHeader>
-                <CardTitle>Lista de Professores</CardTitle>
-                <CardDescription>
-                  Visualize e gerencie os professores cadastrados no sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {teachers.map((teacher) => (
-                    <div
-                      key={teacher.id}
-                      className="flex items-center justify-between p-4 bg-white rounded-lg border"
-                    >
-                      <div>
-                        <h3 className="font-medium">{teacher.name}</h3>
-                        <p className="text-sm text-gray-500">{teacher.email}</p>
-                        <p className="text-sm text-gray-500">{teacher.institution}</p>
-                        <p className="text-xs text-gray-400">
-                          Cadastrado em: {formatDate(teacher.createdAt)}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Edit2 className="h-4 w-4 mr-2" />
-                          Editar
-                        </Button>
-                        <Button variant="outline" size="sm" className="text-red-600">
-                          <UserMinus className="h-4 w-4 mr-2" />
-                          Remover
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
       </main>
+      <Rodape />
     </div>
   )
 } 

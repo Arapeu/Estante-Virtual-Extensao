@@ -1,142 +1,119 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Search, Filter, BookOpen, Download, Eye } from "lucide-react"
 import Cabecalho from "@/components/layout/cabecalho"
 import Rodape from "@/components/layout/rodape"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { BookOpen, Download, Filter, Search } from "lucide-react"
+import Image from 'next/image'
+import { useEffect, useState } from "react"
 
-// Dados de exemplo para demonstração
-const livros = [
-  {
-    id: 1,
-    titulo: "Introdução à Programação",
-    autor: "João Silva",
-    comunidade: "Tecnologia",
-    capa: "/placeholder.svg?height=300&width=200",
-    tags: ["programação", "iniciante", "javascript"],
-    descricao: "Um guia completo para iniciantes em programação",
-  },
-  {
-    id: 2,
-    titulo: "História do Brasil",
-    autor: "Maria Santos",
-    comunidade: "História",
-    capa: "/placeholder.svg?height=300&width=200",
-    tags: ["história", "brasil", "educação"],
-    descricao: "Uma análise detalhada da formação do Brasil",
-  },
-  {
-    id: 3,
-    titulo: "Matemática Aplicada",
-    autor: "Pedro Costa",
-    comunidade: "Matemática",
-    capa: "/placeholder.svg?height=300&width=200",
-    tags: ["matemática", "aplicada", "engenharia"],
-    descricao: "Conceitos matemáticos para aplicações práticas",
-  },
-  {
-    id: 4,
-    titulo: "Cartilha do Imigrante",
-    autor: "Confabu.lab",
-    comunidade: "Social",
-    capa: "/placeholder.svg?height=300&width=200",
-    tags: ["imigrante", "direitos", "brasil"],
-    descricao: "Guia essencial para imigrantes no Brasil",
-  },
-  {
-    id: 5,
-    titulo: "Sustentabilidade Urbana",
-    autor: "Ana Oliveira",
-    comunidade: "Meio Ambiente",
-    capa: "/placeholder.svg?height=300&width=200",
-    tags: ["sustentabilidade", "urbano", "meio ambiente"],
-    descricao: "Práticas sustentáveis para cidades modernas",
-  },
-  {
-    id: 6,
-    titulo: "Psicologia Social",
-    autor: "Carlos Mendes",
-    comunidade: "Psicologia",
-    capa: "/placeholder.svg?height=300&width=200",
-    tags: ["psicologia", "social", "comportamento"],
-    descricao: "Estudo do comportamento humano em sociedade",
-  },
-]
-
-const comunidades = ["Todas", "Tecnologia", "História", "Matemática", "Social", "Meio Ambiente", "Psicologia"]
+interface Book {
+  id: string
+  title: string
+  author: string
+  pdfPath: string
+  coverImagePath: string | null
+  theme: string | null
+}
 
 export default function PaginaCatalogo() {
-  const [termoBusca, setTermoBusca] = useState("")
-  const [comunidadeSelecionada, setComunidadeSelecionada] = useState("Todas")
-  const [mostrarFiltros, setMostrarFiltros] = useState(false)
+  const [books, setBooks] = useState<Book[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
 
-  const livrosFiltrados = livros.filter((livro) => {
-    const correspondeTermoBusca =
-      livro.titulo.toLowerCase().includes(termoBusca.toLowerCase()) ||
-      livro.autor.toLowerCase().includes(termoBusca.toLowerCase()) ||
-      livro.comunidade.toLowerCase().includes(termoBusca.toLowerCase())
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        const response = await fetch('/api/books')
+        if (!response.ok) {
+          throw new Error('Erro ao buscar os livros')
+        }
+        const data = await response.json()
+        setBooks(data.books || [])
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-    const correspondeComunidade = comunidadeSelecionada === "Todas" || livro.comunidade === comunidadeSelecionada
+    fetchBooks()
+  }, [])
 
-    return correspondeTermoBusca && correspondeComunidade
-  })
+  const themes = Array.from(new Set(books.map((book) => book.theme).filter(Boolean)))
+
+  const filteredBooks = books.filter(
+    (book) =>
+      (book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        book.author.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (!selectedTheme || book.theme === selectedTheme)
+  )
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex min-h-screen flex-col">
       <Cabecalho />
 
       <div className="flex-1 py-8">
         <div className="container mx-auto px-4">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-4">Catálogo de Livros</h1>
-            <p className="text-gray-600">Explore nossa coleção de livros e materiais educativos</p>
+            <h1 className="mb-4 text-3xl font-bold">Catálogo de Livros</h1>
+            <p className="text-gray-600">
+              Explore nossa coleção de livros e materiais educativos
+            </p>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col gap-8 lg:flex-row">
             {/* Filtros Laterais */}
-            <div className="lg:w-64">
+            <aside className="w-full lg:w-64">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Filter className="h-5 w-5" />
-                    Filtros
+                    Filtrar por Tema
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">Comunidades</h3>
-                    <div className="space-y-2">
-                      {comunidades.map((comunidade) => (
-                        <button
-                          key={comunidade}
-                          onClick={() => setComunidadeSelecionada(comunidade)}
-                          className={`block w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                            comunidadeSelecionada === comunidade ? "bg-blue-100 text-blue-700" : "hover:bg-gray-100"
-                          }`}
-                        >
-                          {comunidade}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                <CardContent className="space-y-2">
+                  <Button
+                    variant={!selectedTheme ? 'secondary' : 'ghost'}
+                    className="w-full justify-start"
+                    onClick={() => setSelectedTheme(null)}
+                  >
+                    Todos os temas
+                  </Button>
+                  {themes.map((theme) => (
+                    <Button
+                      key={theme}
+                      variant={selectedTheme === theme ? 'secondary' : 'ghost'}
+                      className="w-full justify-start"
+                      onClick={() => setSelectedTheme(theme as string)}
+                    >
+                      {theme}
+                    </Button>
+                  ))}
                 </CardContent>
               </Card>
-            </div>
+            </aside>
 
             {/* Área Principal */}
             <div className="flex-1">
-              {/* Barra de Busca */}
-              <div className="mb-6">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              {/* Barra de Busca e Botão de Upload */}
+              <div className="mb-6 flex items-center gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                   <Input
-                    placeholder="Buscar por título, autor ou comunidade..."
-                    value={termoBusca}
-                    onChange={(e) => setTermoBusca(e.target.value)}
+                    placeholder="Buscar por título ou autor..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
@@ -144,73 +121,68 @@ export default function PaginaCatalogo() {
 
               {/* Resultados */}
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-gray-600">{livrosFiltrados.length} livro(s) encontrado(s)</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="lg:hidden"
-                  onClick={() => setMostrarFiltros(!mostrarFiltros)}
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filtros
-                </Button>
+                <p className="text-gray-600">
+                  {filteredBooks.length} livro(s) encontrado(s)
+                </p>
               </div>
 
               {/* Grade de Livros */}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {livrosFiltrados.map((livro) => (
-                  <Card key={livro.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader className="p-4">
-                      <div className="aspect-[3/4] bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
-                        <BookOpen className="h-12 w-12 text-gray-400" />
-                      </div>
-                      <CardTitle className="text-lg line-clamp-2">{livro.titulo}</CardTitle>
-                      <CardDescription>por {livro.autor}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                      <div className="space-y-3">
-                        <Badge variant="secondary">{livro.comunidade}</Badge>
-                        <p className="text-sm text-gray-600 line-clamp-2">{livro.descricao}</p>
-                        <div className="flex flex-wrap gap-1">
-                          {livro.tags.slice(0, 3).map((tag) => (
-                            <Badge key={tag} variant="outline" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
+              {isLoading ? (
+                <p className="text-center">Carregando livros...</p>
+              ) : (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredBooks.map((book) => (
+                    <Card
+                      key={book.id}
+                      className="flex flex-col justify-between transition-shadow hover:shadow-lg"
+                    >
+                      <CardHeader className="p-4">
+                        <div className="relative mb-4 flex aspect-[3/4] items-center justify-center rounded-lg bg-gray-200">
+                          {book.coverImagePath ? (
+                            <Image
+                              src={book.coverImagePath}
+                              alt={`Capa do livro ${book.title}`}
+                              layout="fill"
+                              objectFit="cover"
+                              className="rounded-lg"
+                            />
+                          ) : (
+                            <BookOpen className="h-12 w-12 text-gray-400" />
+                          )}
                         </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" className="flex-1">
-                            <Eye className="h-4 w-4 mr-2" />
-                            Ver Mais
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                        <CardTitle className="line-clamp-2 text-lg">
+                          {book.title}
+                        </CardTitle>
+                        <CardDescription>por {book.author}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex flex-col gap-4 p-4 pt-0">
+                        {book.theme && (
+                          <Badge variant="outline" className="w-fit">
+                            {book.theme}
+                          </Badge>
+                        )}
+                        <Button size="sm" className="w-full" asChild>
+                          <a href={book.pdfPath} download>
+                            <Download className="mr-2 h-4 w-4" />
+                            Baixar PDF
+                          </a>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
 
-              {/* Paginação */}
-              {livrosFiltrados.length > 0 && (
-                <div className="mt-8 flex justify-center">
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      Anterior
-                    </Button>
-                    <Button size="sm">1</Button>
-                    <Button variant="outline" size="sm">
-                      2
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      3
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      Próximo
-                    </Button>
-                  </div>
+              {/* Mensagem de Nenhum Livro Encontrado */}
+              {!isLoading && filteredBooks.length === 0 && (
+                <div className="mt-8 flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
+                  <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-4 text-xl font-semibold">
+                    Nenhum livro encontrado
+                  </h3>
+                  <p className="mt-2 text-sm text-gray-500">
+                    Tente ajustar sua busca ou o filtro de tema.
+                  </p>
                 </div>
               )}
             </div>
