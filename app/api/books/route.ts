@@ -14,7 +14,10 @@ const handleFileUpload = async (file: File, destination: string) => {
   const path = join(process.cwd(), destination, sanitizedFileName)
 
   await writeFile(path, buffer)
-  return `/uploads/${destination.split('public/uploads/')[1]}/${sanitizedFileName}`
+  if (destination.includes('covers')) {
+    return `/uploads/covers/${sanitizedFileName}`
+  }
+  return `/uploads/${sanitizedFileName}`
 }
 
 export async function POST(request: NextRequest) {
@@ -24,6 +27,10 @@ export async function POST(request: NextRequest) {
   const theme = data.get('theme') as string
   const pdfFile: File | null = data.get('pdf') as unknown as File
   const coverImageFile: File | null = data.get('coverImage') as unknown as File
+  const accessLevel = (data.get('accessLevel') as string) || 'PUBLIC'
+
+  const validAccessLevels = ['PUBLIC', 'STUDENT_AND_TEACHER', 'TEACHER_ONLY']
+  const finalAccessLevel = validAccessLevels.includes(accessLevel) ? accessLevel : 'PUBLIC'
 
   if (!pdfFile || !title || !author || !theme) {
     return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
@@ -44,6 +51,7 @@ export async function POST(request: NextRequest) {
         theme,
         pdfPath,
         coverImagePath,
+        accessLevel: finalAccessLevel,
       },
     })
 

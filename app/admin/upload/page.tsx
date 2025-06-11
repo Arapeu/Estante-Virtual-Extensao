@@ -27,6 +27,7 @@ const formSchema = z.object({
   title: z.string().min(1, 'O título é obrigatório'),
   author: z.string().min(1, 'O autor é obrigatório'),
   theme: z.string().min(1, 'O tema é obrigatório'),
+  accessLevel: z.enum(['PUBLIC', 'STUDENT_AND_TEACHER', 'TEACHER_ONLY']),
   pdf: z
     .instanceof(File)
     .refine((file) => file.size <= MAX_PDF_SIZE, {
@@ -57,6 +58,7 @@ export default function UploadBookPage() {
       title: '',
       author: '',
       theme: '',
+      accessLevel: 'PUBLIC',
     },
   })
 
@@ -66,6 +68,7 @@ export default function UploadBookPage() {
     formData.append('title', values.title)
     formData.append('author', values.author)
     formData.append('theme', values.theme)
+    formData.append('accessLevel', values.accessLevel)
     formData.append('pdf', values.pdf)
     if (values.coverImage) {
       formData.append('coverImage', values.coverImage)
@@ -142,6 +145,23 @@ export default function UploadBookPage() {
                   <FormLabel>Tema</FormLabel>
                   <FormControl>
                     <Input placeholder="Ex: Tecnologia, História, etc." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="accessLevel"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nível de Acesso</FormLabel>
+                  <FormControl>
+                    <select {...field} className="w-full border rounded p-2">
+                      <option value="PUBLIC">Público (qualquer pessoa)</option>
+                      <option value="STUDENT_AND_TEACHER">Alunos e Professores</option>
+                      <option value="TEACHER_ONLY">Apenas Professores</option>
+                    </select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

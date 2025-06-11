@@ -15,6 +15,7 @@ interface Book {
   author: string
   pdfPath: string
   coverImagePath: string | null
+  accessLevel?: 'PUBLIC' | 'STUDENT_AND_TEACHER' | 'TEACHER_ONLY'
 }
 
 export default function PaginaInicial() {
@@ -39,6 +40,9 @@ export default function PaginaInicial() {
 
     fetchBooks()
   }, [])
+
+  // Apenas livros públicos
+  const publicBooks = books.filter((book) => book.accessLevel === 'PUBLIC')
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -77,7 +81,7 @@ export default function PaginaInicial() {
             <p className="text-center">Carregando livros...</p>
           ) : (
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {books.slice(0, 6).map((book) => (
+              {publicBooks.slice(0, 6).map((book) => (
                 <Card
                   key={book.id}
                   className="flex flex-col justify-between transition-shadow hover:shadow-lg"
